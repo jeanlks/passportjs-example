@@ -2,9 +2,12 @@
 const express = require('express');
 const app = express();
 const passport = require('passport');
+require('dotenv').config();
 const GoogleStrategy = require('passport-google-oauth20');
 const cookieSession = require('cookie-session');
-require('https').globalAgent.options.rejectUnauthorized = false;
+require('./setup_proxy');
+
+  
 
 // cookieSession config
 app.use(cookieSession({
@@ -15,16 +18,18 @@ app.use(cookieSession({
 app.use(passport.initialize()); // Used to initialize passport
 app.use(passport.session()); // Used to persist login sessions
 
+
+const strategyOptions = {
+    clientId: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    callbackURL: 'http://localhost:8000/auth/google/callback'
+}
+const verifyCallback = async (accessToken, refreshToken, profile, done) => {
+    done(null, profile);
+}
+
 // Strategy config
-passport.use(new GoogleStrategy({
-        clientID: '',
-        clientSecret: '',
-        callbackURL: 'http://localhost:8000/auth/google/callback'
-    },
-    (accessToken, refreshToken, profile, done) => {
-        done(null, profile); // passes the profile data to serializeUser
-    }
-));
+passport.use(new GoogleStrategy(strategyOptions, verifyCallback));
 
 // Used to stuff a piece of information into a cookie
 passport.serializeUser((user, done) => {
