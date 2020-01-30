@@ -2,12 +2,11 @@
 const express = require('express');
 const app = express();
 const passport = require('passport');
-require('dotenv').config();
 const GoogleStrategy = require('passport-google-oauth20');
 const cookieSession = require('cookie-session');
 require('./setup_proxy');
+require('dotenv').config();
 
-  
 
 // cookieSession config
 app.use(cookieSession({
@@ -19,17 +18,17 @@ app.use(passport.initialize()); // Used to initialize passport
 app.use(passport.session()); // Used to persist login sessions
 
 
-const strategyOptions = {
-    clientId: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    callbackURL: 'http://localhost:8000/auth/google/callback'
-}
-const verifyCallback = async (accessToken, refreshToken, profile, done) => {
-    done(null, profile);
-}
 
 // Strategy config
-passport.use(new GoogleStrategy(strategyOptions, verifyCallback));
+passport.use(new GoogleStrategy({
+        clientID: process.env.CLIENT_ID,
+        clientSecret: process.env.CLIENT_SECRET,
+        callbackURL: 'http://localhost:8000/auth/google/callback'
+    },
+    (accessToken, refreshToken, profile, done) => {
+        done(null, profile); // passes the profile data to serializeUser
+    }
+));
 
 // Used to stuff a piece of information into a cookie
 passport.serializeUser((user, done) => {
@@ -44,7 +43,7 @@ passport.deserializeUser((user, done) => {
 // Middleware to check if the user is authenticated
 function isUserAuthenticated(req, res, next) {
     if (req.user) {
-        console.log(req.user);
+        console.log(req.user.emails[0]);
         next();
     } else {
         res.send('You must login!');
@@ -58,7 +57,10 @@ app.get('/', (req, res) => {
 
 // passport.authenticate middleware is used here to authenticate the request
 app.get('/auth/google', passport.authenticate('google', {
-    scope: ['profile'] // Used to specify the required data
+    scope: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email'
+    ]// Used to specify the required data
 }));
 
 // The middleware receives the data from Google and runs the function on Strategy config
