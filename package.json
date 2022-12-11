@@ -20,7 +20,7 @@
     "cookie-session": "^1.4.0",
     "dotenv": "^8.2.0",
     "ejs": "^3.0.1",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "https-proxy-agent": "^4.0.0",
     "passport": "^0.4.1",
     "passport-google-oauth20": "^2.0.0",
